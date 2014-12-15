@@ -9,7 +9,7 @@
 /* CHANGE THIS TO YOUR OWN UNIQUE VALUE.  The MAC number should be
  * different from any other devices on your network or you'll have
  * problems receiving packets. */
-static uint8_t mac[] = { 0x02, 0xAA, 0xBB, 0xCC, 0x00, 0x22 };
+static uint8_t mac[] = { 0x02, 0xAA, 0xBB, 0xCC, 0xAA, 0x22 };
 
 /* CHANGE THIS TO MATCH YOUR HOST NETWORK.  Most home networks are in
  * the 192.168.0.XXX or 192.168.1.XXX subrange.  Pick an address
@@ -30,7 +30,7 @@ int debug = 1;
 
 // Choose which 2 pins you will use for output.
 // Can be any valid output pins. If using SPI (fast) use pins 11 (data) and 13 (clock)
-Uint dataPin = 2;   
+int dataPin = 2;   
 int clockPin = 3; 
 
 // Set the first variable to the NUMBER of pixels. 32 = 32 pixels in a row
@@ -101,20 +101,21 @@ void buzzCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail, 
       "<center>"
       "Choose Color Mode "
       "<select name=\"mode\"<p><p>"
-      "<p><option value=\"100\">Off</option><p><p>"
-      "<p><option value=\"110\" selected=\"selected\">Red</option><p><p>"
-      "<p><option value=\"120\">Orange</option><p><p>"
+      "<p><option value=\"100\" selected=\"selected\">Off</option><p><p>"
+      "<p><option value=\"110\">Red</option><p><p>"
+      "<p><option value=\"120\">Yellow</option><p><p>"
       "<p><option value=\"130\">Green</option><p><p>"
       "<p><option value=\"140\">Teal</option><p><p>"
       "<p><option value=\"150\">Blue</option><p><p>"
       "<p><option value=\"160\">Violet</option><p><p>"
       "<p><option value=\"300\">Rainbow Transitions</option><p><p>"
       "<p><option value=\"310\">Rainbow Letters</option><p><p>"
+      "<p><option value=\"320\">EMERGENCY</option><p><p>"
       "<p></select></p></p>"
       "Choose Interval in Seconds "
       "<select name=\"interval\"<p><p>"
-      "<p><option value=\"1\">instant</option><p><p>"
-      "<p><option value=\"5\" selected=\"selected\">5 seconds</option><p><p>"
+      "<p><option value=\"1\" selected=\"selected\">instant</option><p><p>"
+      "<p><option value=\"5\" >5 seconds</option><p><p>"
       "<p><option value=\"10\">10 seconds</option><p><p>"
       "<p><option value=\"20\">20 seconds</option><p><p>"
       "<p><option value=\"30\">30 seconds</option><p><p>"
@@ -252,7 +253,7 @@ void colorChase(uint32_t c, uint8_t wait) {
 void setup()
 {
   // Start console  
-  Serial.begin(57600);
+  Serial.begin(9600);
 
   // Start up the LED strip
   strip.begin();
@@ -269,6 +270,8 @@ void setup()
 
   /* start the server to wait for connections */
   webserver.begin();
+
+  Serial.print("server at "); Serial.println(Ethernet.localIP()); //debug to serial if server is 0.0.0.0 web boot failed check sheld connections - See more at: http://kellykeeton.com/2013/08/06/webpower/#sthash.RaVG6diY.dpuf
 }
 
 
@@ -319,15 +322,16 @@ void loop()
      /* Our Color Case for the Lights! */
     switch (mode) {
     case 100:
-      //Off
-        colorWipe(strip.Color(0,0,0), interval);
-        break;
+      // All Pixels OFF
+      int i;
+      for(i=0; i<strip.numPixels(); i++) strip.setPixelColor(i, 0);
+      break;
     case 110:
       //Red Fill
        colorWipe(strip.Color(127,0,0), interval);
       break;
     case 120:
-      //Orange Fill
+      //Yellow Fill
        colorWipe(strip.Color(127,127,0), interval);
       break;
     case 130:
@@ -349,21 +353,17 @@ void loop()
      case 300:
       // Rainbow Fill
       rainbow(interval);
-      if(debug) { Serial.println("calling rainbow-30");}
       break;    
     case 310:
       //Rainbow Numbers
       rainbowCycle(interval);
       break;    
     case 320:
-      //Color Chase Red
-      colorChase(strip.Color(127,0,0), interval); 
+      //EMERGENCY MODE - RED
+      colorChase(strip.Color(127,0,0), 20); 
       break;    
-     
     }
-
-    rainbowCycle(30);
-  
+    strip.show();   // write all the pixels out
 }
 
 
